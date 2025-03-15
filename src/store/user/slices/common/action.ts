@@ -22,16 +22,16 @@ const GET_USER_STATE_KEY = 'initUserState';
  */
 export interface CommonAction {
   refreshUserState: () => Promise<void>;
-
+  setUserStateInit: (value: boolean) => void;
   updateAvatar: (avatar: string) => Promise<void>;
   useCheckTrace: (shouldFetch: boolean) => SWRResponse;
   useInitUserState: (
     isLogin: boolean | undefined,
     serverConfig: GlobalServerConfig,
     options?: {
-      onSuccess: (data: UserInitializationState) => void;
+      onSuccess?: (data: UserInitializationState) => void;
     },
-  ) => SWRResponse;
+  ) => SWRResponse<UserInitializationState, Error>;
 }
 
 export const createCommonSlice: StateCreator<
@@ -43,6 +43,12 @@ export const createCommonSlice: StateCreator<
   refreshUserState: async () => {
     await mutate(GET_USER_STATE_KEY);
   },
+  
+  setUserStateInit: (value) => {
+    console.log("📊 [User Store] 设置用户状态初始化为:", value ? "已初始化" : "未初始化");
+    set({ isUserStateInit: value }, false, n('setUserStateInit'));
+  },
+  
   updateAvatar: async (avatar) => {
     const { userClientService } = await import('@/services/user');
 

@@ -6,6 +6,15 @@ declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
   namespace NodeJS {
     interface ProcessEnv {
+      // ===== Firebase ===== //
+      NEXT_PUBLIC_ENABLE_FIREBASE_AUTH?: string;
+      NEXT_PUBLIC_FIREBASE_API_KEY?: string;
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN?: string;
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID?: string;
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET?: string;
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID?: string;
+      NEXT_PUBLIC_FIREBASE_APP_ID?: string;
+
       // ===== Clerk ===== //
       NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY?: string;
       CLERK_SECRET_KEY?: string;
@@ -149,6 +158,21 @@ export const getAuthConfig = () => {
       NEXT_PUBLIC_ENABLE_CLERK_AUTH: z.boolean().optional(),
 
       NEXT_PUBLIC_ENABLE_NEXT_AUTH: z.boolean().optional(),
+
+      /**
+       * whether to enable Firebase auth
+       */
+      NEXT_PUBLIC_ENABLE_FIREBASE_AUTH: z.boolean().optional(),
+
+      /**
+       * Firebase config
+       */
+      NEXT_PUBLIC_FIREBASE_API_KEY: z.string().optional(),
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().optional(),
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().optional(),
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().optional(),
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().optional(),
+      NEXT_PUBLIC_FIREBASE_APP_ID: z.string().optional(),
     },
     server: {
       // Clerk
@@ -269,6 +293,15 @@ export const getAuthConfig = () => {
 
       // Casdoor
       CASDOOR_WEBHOOK_SECRET: process.env.CASDOOR_WEBHOOK_SECRET,
+
+      // Firebase
+      NEXT_PUBLIC_ENABLE_FIREBASE_AUTH: process.env.NEXT_PUBLIC_ENABLE_FIREBASE_AUTH === '1',
+      NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+      NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
     },
   });
 };

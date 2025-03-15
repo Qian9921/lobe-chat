@@ -113,6 +113,23 @@ const nextAuthMiddleware = NextAuthEdge.auth((req) => {
   return response;
 });
 
+// Firebase 认证中间件
+const firebaseAuthMiddleware = (req: NextRequest) => {
+  // 获取响应
+  const response = defaultMiddleware(req);
+  
+  // 检查请求头中是否有 Firebase 授权
+  const isLoggedIn = req.headers.get(OAUTH_AUTHORIZED) === 'true';
+  
+  // 移除并设置 OAuth 授权头
+  response.headers.delete(OAUTH_AUTHORIZED);
+  if (isLoggedIn) {
+    response.headers.set(OAUTH_AUTHORIZED, 'true');
+  }
+  
+  return response;
+};
+
 const isProtectedRoute = createRouteMatcher([
   '/settings(.*)',
   '/files(.*)',
@@ -134,8 +151,13 @@ const clerkAuthMiddleware = clerkMiddleware(
   },
 );
 
-export default authEnv.NEXT_PUBLIC_ENABLE_CLERK_AUTH
-  ? clerkAuthMiddleware
-  : authEnv.NEXT_PUBLIC_ENABLE_NEXT_AUTH
-    ? nextAuthMiddleware
-    : defaultMiddleware;
+// 检查是否启用了 Firebase 认证
+const enableFirebaseAuth = process.env.NEXT_PUBLIC_ENABLE_FIREBASE_AUTH === 'true';
+
+export default enableFirebaseAuth
+  ? firebaseAuthMiddleware
+  : authEnv.NEXT_PUBLIC_ENABLE_CLERK_AUTH
+    ? clerkAuthMiddleware
+    : authEnv.NEXT_PUBLIC_ENABLE_NEXT_AUTH
+      ? nextAuthMiddleware
+      : defaultMiddleware;
