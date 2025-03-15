@@ -15,7 +15,7 @@ import { FileModel } from '@/database/server/models/file';
 import { asyncAuthedProcedure, asyncRouter as router } from '@/libs/trpc/async';
 import { getServerDefaultFilesConfig } from '@/server/globalConfig';
 import { initAgentRuntimeWithUserPayload } from '@/server/modules/AgentRuntime';
-import { S3 } from '@/server/modules/S3';
+import { Storage } from '@/server/modules/Storage';
 import { ChunkService } from '@/server/services/chunk';
 import {
   AsyncTaskError,
@@ -163,11 +163,11 @@ export const fileRouter = router({
         throw new TRPCError({ code: 'BAD_REQUEST', message: 'File not found' });
       }
 
-      const s3 = new S3();
+      const storage = new Storage();
 
       let content: Uint8Array | undefined;
       try {
-        content = await s3.getFileByteArray(file.url);
+        content = await storage.getFileByteArray(file.url);
       } catch (e) {
         console.error(e);
         // if file not found, delete it from db

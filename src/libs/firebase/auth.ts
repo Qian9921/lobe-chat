@@ -11,7 +11,7 @@ import {
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, Timestamp } from 'firebase/firestore';
 
-import { auth, db } from './firebase';
+import { firebaseAuth, firebaseDb } from './firebase';
 
 /**
  * 用户数据类型
@@ -27,6 +27,21 @@ export interface UserData {
   uid: string;
 }
 
+// 检查Firebase是否已初始化
+const checkFirebaseAuth = () => {
+  if (!firebaseAuth) {
+    throw new Error('Firebase Auth 未初始化，请检查您的环境');
+  }
+  return firebaseAuth;
+};
+
+const checkFirebaseDb = () => {
+  if (!firebaseDb) {
+    throw new Error('Firebase Firestore 未初始化，请检查您的环境');
+  }
+  return firebaseDb;
+};
+
 /**
  * 登录用户
  * @param email 邮箱
@@ -34,6 +49,7 @@ export interface UserData {
  */
 export const loginUser = async (email: string, password: string) => {
   try {
+    const auth = checkFirebaseAuth();
     const userCredential = await signInWithEmailAndPassword(auth, email, password);
     return userCredential.user;
   } catch (error: any) {
@@ -46,6 +62,9 @@ export const loginUser = async (email: string, password: string) => {
  */
 export const loginWithGoogle = async () => {
   try {
+    const auth = checkFirebaseAuth();
+    const db = checkFirebaseDb();
+    
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
     
@@ -55,13 +74,13 @@ export const loginWithGoogle = async () => {
     
     // 如果用户不存在，则创建新用户记录
     if (!userDoc.exists()) {
+      const { user } = userCredential;
       const userData: UserData = {
         created_time: Timestamp.now(),
-        display_name: userCredential.user.displayName || '',
-        email: userCredential.user.email || '',
-        photo_url: userCredential.user.photoURL || '',
-        role: 'USER',
-        uid: userCredential.user.uid,
+        display_name: user.displayName || user.email?.split('@')[0] || 'User',
+        email: user.email || '',
+        photo_url: user.photoURL || '',
+        uid: user.uid,
       };
       
       await setDoc(userDocRef, userData);
@@ -69,34 +88,36 @@ export const loginWithGoogle = async () => {
     
     return userCredential.user;
   } catch (error: any) {
-    throw new Error(`Google 登录失败: ${error.message}`);
+    throw new Error(`Google登录失败: ${error.message}`);
   }
 };
 
 /**
- * 注册新用户
+ * 注册用户
  * @param email 邮箱
  * @param password 密码
  * @param displayName 显示名称
  */
 export const registerUser = async (email: string, password: string, displayName: string) => {
   try {
+    const auth = checkFirebaseAuth();
+    const db = checkFirebaseDb();
+    
     // 创建用户
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     const user = userCredential.user;
     
     // 更新用户资料
-    await updateProfile(user, { displayName });
+    await updateProfile(user, {
+      displayName,
+    });
     
-    // 在 Firestore 中创建用户文档
+    // 创建用户数据
     const userData: UserData = {
       created_time: Timestamp.now(),
       display_name: displayName,
-      email: user.email || '',
-      first_name: '',
-      last_name: '',
-      photo_url: '',
-      role: 'USER',
+      email: email,
+      photo_url: user.photoURL || '',
       uid: user.uid,
     };
     
@@ -113,6 +134,7 @@ export const registerUser = async (email: string, password: string, displayName:
  */
 export const logoutUser = async () => {
   try {
+    const auth = checkFirebaseAuth();
     await signOut(auth);
     return true;
   } catch (error: any) {
@@ -125,7 +147,12 @@ export const logoutUser = async () => {
  */
 export const getCurrentUser = (): Promise<User | null> => {
   return new Promise((resolve) => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (!firebaseAuth) {
+      resolve(null);
+      return;
+    }
+    
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (user) => {
       unsubscribe();
       resolve(user);
     });
@@ -138,17 +165,17 @@ export const getCurrentUser = (): Promise<User | null> => {
  */
 export const getUserData = async (uid: string): Promise<UserData | null> => {
   try {
+    const db = checkFirebaseDb();
     const userDocRef = doc(db, 'users', uid);
     const userDoc = await getDoc(userDocRef);
     
     if (userDoc.exists()) {
       return userDoc.data() as UserData;
+    } else {
+      return null;
     }
-    
-    return null;
-  } catch (error) {
-    console.error('获取用户数据失败:', error);
-    return null;
+  } catch (error: any) {
+    throw new Error(`获取用户数据失败: ${error.message}`);
   }
 };
 
@@ -158,6 +185,7 @@ export const getUserData = async (uid: string): Promise<UserData | null> => {
  */
 export const resetPassword = async (email: string) => {
   try {
+    const auth = checkFirebaseAuth();
     await sendPasswordResetEmail(auth, email);
     return true;
   } catch (error: any) {

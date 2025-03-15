@@ -109,18 +109,47 @@ export const agentRouter = router({
   getKnowledgeBasesAndFiles: agentProcedure
     .input(
       z.object({
-        agentId: z.string(),
+        agentId: z.string().nullable(),
       }),
     )
     .query(async ({ ctx, input }): Promise<KnowledgeItem[]> => {
+      // 获取所有知识库
       const knowledgeBases = await ctx.knowledgeBaseModel.query();
 
+      // 获取所有文件，不显示已在知识库中的文件
       const files = await ctx.fileModel.query({
         showFilesInKnowledgeBase: false,
       });
 
+      // 如果agentId为null，则返回所有知识库和文件，但标记为未启用
+      if (!input.agentId) {
+        console.log('getKnowledgeBasesAndFiles: agentId为null，返回所有未启用的知识项');
+        return [
+          ...files
+            // 过滤掉所有图片
+            .filter((file) => !file.fileType.startsWith('image'))
+            .map((file) => ({
+              enabled: false, // 默认未启用
+              fileType: file.fileType,
+              id: file.id,
+              name: file.name,
+              type: KnowledgeType.File,
+            })),
+          ...knowledgeBases.map((knowledgeBase) => ({
+            avatar: knowledgeBase.avatar,
+            description: knowledgeBase.description,
+            enabled: false, // 默认未启用
+            id: knowledgeBase.id,
+            name: knowledgeBase.name,
+            type: KnowledgeType.KnowledgeBase,
+          })),
+        ];
+      }
+
+      // 获取特定agent已分配的知识项
       const knowledge = await ctx.agentModel.getAgentAssignedKnowledge(input.agentId);
 
+      // 返回所有知识项，并标记哪些已启用
       return [
         ...files
           // 过滤掉所有图片

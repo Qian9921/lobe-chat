@@ -42,6 +42,16 @@ interface UploadWithProgressResult {
   url: string;
 }
 
+/**
+ * 检查Firebase存储是否可用
+ */
+const canUseFirebaseStorage = (): boolean => {
+  return typeof window !== 'undefined' && 
+    typeof uploadService.uploadWithFirebase === 'function' && 
+    uploadService['canUseFirebaseStorage'] && 
+    uploadService['canUseFirebaseStorage']();
+};
+
 export interface FileUploadAction {
   uploadBase64FileWithProgress: (
     base64: string,
@@ -94,17 +104,47 @@ export const createFileUploadSlice: StateCreator<
     }
     // 2. if file don't exist, need upload files
     else {
-      // if is server mode, upload to server s3, or upload to client s3
+      // if is server mode, upload using best available method
       if (isServerMode) {
-        metadata = await uploadService.uploadWithProgress(file, {
-          onProgress: (status, upload) => {
-            onStatusUpdate?.({
-              id: file.name,
-              type: 'updateFile',
-              value: { status: status === 'success' ? 'processing' : status, uploadState: upload },
+        try {
+          // 优先尝试使用Firebase客户端上传（避免Edge环境的限制）
+          if (canUseFirebaseStorage()) {
+            console.log('Action: 检测到Firebase可用，使用Firebase客户端上传');
+            metadata = await uploadService.uploadWithFirebase(file, {
+              onProgress: (status, upload) => {
+                onStatusUpdate?.({
+                  id: file.name,
+                  type: 'updateFile',
+                  value: { status: status === 'success' ? 'processing' : status, uploadState: upload },
+                });
+              },
             });
-          },
-        });
+          } 
+          // 回退到传统上传方法
+          else {
+            console.log('Action: Firebase不可用，使用传统上传方法');
+            metadata = await uploadService.uploadWithProgress(file, {
+              onProgress: (status, upload) => {
+                onStatusUpdate?.({
+                  id: file.name,
+                  type: 'updateFile',
+                  value: { status: status === 'success' ? 'processing' : status, uploadState: upload },
+                });
+              },
+            });
+          }
+        } catch (error) {
+          console.error('上传失败:', error);
+          // 显示友好的错误信息
+          message.error(
+            error instanceof Error && error.message.includes('Edge Runtime')
+              ? '上传失败: Edge运行时需要S3配置。请联系管理员配置S3或使用Firebase。'
+              : '上传失败，请稍后重试',
+          );
+          
+          onStatusUpdate?.({ id: file.name, type: 'removeFile' });
+          return;
+        }
       } else {
         if (!skipCheckFileType && !file.type.startsWith('image')) {
           onStatusUpdate?.({ id: file.name, type: 'removeFile' });
@@ -119,45 +159,26 @@ export const createFileUploadSlice: StateCreator<
           return;
         }
 
-        // Upload to the indexeddb in the browser
         metadata = await uploadService.uploadToClientS3(hash, file);
       }
     }
 
-    // 3. use more powerful file type detector to get file type
-    let fileType = file.type;
-
-    if (!file.type) {
-      const { fileTypeFromBuffer } = await import('file-type');
-
-      const type = await fileTypeFromBuffer(fileArrayBuffer);
-      fileType = type?.mime || 'text/plain';
-    }
-
-    // 4. create file to db
-    const data = await fileService.createFile(
-      {
-        fileType,
-        hash,
-        metadata,
-        name: file.name,
-        size: file.size,
-        url: metadata.path,
-      },
+    const res = await fileService.createFile({
+      fileType: file.type,
+      hash,
       knowledgeBaseId,
-    );
+      metadata,
+      name: file.name,
+      size: file.size,
+      url: metadata.path,
+    });
 
     onStatusUpdate?.({
       id: file.name,
       type: 'updateFile',
-      value: {
-        fileUrl: data.url,
-        id: data.id,
-        status: 'success',
-        uploadState: { progress: 100, restTime: 0, speed: 0 },
-      },
+      value: { id: res.id, status: 'success' },
     });
 
-    return { ...data, filename: file.name };
+    return { ...res, filename: file.name };
   },
 });

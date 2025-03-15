@@ -41,10 +41,26 @@ class _FileModel extends BaseModel<'files'> {
   }
 
   private async getBase64ByFileHash(hash: string) {
-    const fileItem = await clientS3Storage.getObject(hash);
-    if (!fileItem) throw new Error('file not found');
-
-    return Buffer.from(await fileItem.arrayBuffer()).toString('base64');
+    try {
+      console.log(`FileModel: 尝试通过哈希值获取文件 - hash:${hash}`);
+      
+      // 尝试从本地存储获取文件
+      const fileItem = await clientS3Storage.getObject(hash);
+      
+      if (!fileItem) {
+        console.error(`FileModel: 文件未找到 - hash:${hash}`);
+        // 返回一个空图像数据，而不是抛出错误，防止UI中断
+        return '';
+      }
+      
+      // 成功获取到文件
+      console.log(`FileModel: 文件获取成功 - hash:${hash}, 大小:${fileItem.size}bytes`);
+      return Buffer.from(await fileItem.arrayBuffer()).toString('base64');
+    } catch (error) {
+      console.error(`FileModel: 获取文件失败 - hash:${hash}, 错误:`, error);
+      // 返回一个空图像数据，而不是抛出错误，防止UI中断
+      return '';
+    }
   }
 }
 

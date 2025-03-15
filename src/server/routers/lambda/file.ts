@@ -7,7 +7,7 @@ import { AsyncTaskModel } from '@/database/server/models/asyncTask';
 import { ChunkModel } from '@/database/server/models/chunk';
 import { FileModel } from '@/database/server/models/file';
 import { authedProcedure, router } from '@/libs/trpc';
-import { S3 } from '@/server/modules/S3';
+import { Storage } from '@/server/modules/Storage';
 import { getFullFileUrl } from '@/server/utils/files';
 import { AsyncTaskStatus, AsyncTaskType } from '@/types/asyncTask';
 import { FileListItem, QueryFileListSchema, UploadFileSchema } from '@/types/files';
@@ -150,8 +150,8 @@ export const fileRouter = router({
     if (!file) return;
 
     // delele the file from remove from S3 if it is not used by other files
-    const s3Client = new S3();
-    await s3Client.deleteFile(file.url!);
+    const storage = new Storage();
+    await storage.deleteFile(file.url!);
   }),
 
   removeFileAsyncTask: fileProcedure
@@ -184,9 +184,9 @@ export const fileRouter = router({
       if (!needToRemoveFileList || needToRemoveFileList.length === 0) return;
 
       // remove from S3
-      const s3Client = new S3();
+      const storage = new Storage();
 
-      await s3Client.deleteFiles(needToRemoveFileList.map((file) => file.url!));
+      await storage.deleteFiles(needToRemoveFileList.map((file) => file.url!));
     }),
 });
 

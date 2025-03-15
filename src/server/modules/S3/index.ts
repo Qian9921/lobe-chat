@@ -2,11 +2,13 @@ import {
   DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { z } from 'zod';
+import { v4 as uuidv4 } from 'uuid';
 
 import { fileEnv } from '@/config/file';
 
@@ -128,5 +130,50 @@ export class S3 {
     });
 
     return this.client.send(command);
+  }
+
+  // 列出指定前缀下的所有文件
+  public async listFiles(prefix?: string): Promise<FileType[]> {
+    const command = new ListObjectsV2Command({
+      Bucket: this.bucket,
+      Prefix: prefix,
+    });
+
+    const response = await this.client.send(command);
+    
+    if (!response.Contents) {
+      return [];
+    }
+
+    return response.Contents.map((item) => ({
+      Key: item.Key || '',
+      LastModified: item.LastModified || new Date(),
+      Size: item.Size || 0,
+    }));
+  }
+
+  // 获取文件的URL（对S3来说，就是获取预签名URL）
+  public async getFileUrl(key: string): Promise<string> {
+    return this.createPreSignedUrlForPreview(key);
+  }
+
+  // 上传Buffer内容到S3
+  public async upload(pathname: string, file: Buffer, contentType?: string): Promise<void> {
+    const command = new PutObjectCommand({
+      ACL: this.setAcl ? 'public-read' : undefined,
+      Body: file,
+      Bucket: this.bucket,
+      Key: pathname,
+      ContentType: contentType || 'application/octet-stream',
+    });
+
+    await this.client.send(command);
+  }
+
+  // 生成唯一文件名
+  public generateFileName(originalName: string): string {
+    const extension = originalName.split('.').pop() || '';
+    const uuid = uuidv4();
+    return `${uuid}.${extension}`;
   }
 }

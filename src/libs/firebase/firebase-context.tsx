@@ -41,6 +41,25 @@ export const useFirebaseAuth = () => useContext(FirebaseContext);
 export const FirebaseAuthProvider = ({ children }: { children: ReactNode }) => {
   console.log(" [Firebase Auth] Provider 初始化开始");
   
+  // 安全检查：确保firebaseApp不为null
+  if (!firebaseApp) {
+    console.warn("[Firebase Auth] firebaseApp 为空，可能是环境不支持或配置错误");
+    
+    // 在没有Firebase的情况下提供默认上下文值
+    return (
+      <FirebaseContext.Provider 
+        value={{ 
+          isOnline: typeof window !== 'undefined' ? navigator.onLine : true,
+          loading: false,
+          user: null,
+          userData: null 
+        }}
+      >
+        {children}
+      </FirebaseContext.Provider>
+    );
+  }
+  
   // 初始化 Firebase 服务
   const auth = getAuth(firebaseApp);
   const db = getFirestore(firebaseApp);

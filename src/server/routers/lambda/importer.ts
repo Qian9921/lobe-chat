@@ -5,6 +5,7 @@ import { DataImporterRepos } from '@/database/repositories/dataImporter';
 import { serverDB } from '@/database/server';
 import { authedProcedure, router } from '@/libs/trpc';
 import { S3 } from '@/server/modules/S3';
+import { Storage } from '@/server/modules/Storage';
 import { ImportResults, ImporterEntryData } from '@/types/importer';
 
 const importProcedure = authedProcedure.use(async (opts) => {
@@ -23,8 +24,8 @@ export const importerRouter = router({
       let data: ImporterEntryData | undefined;
 
       try {
-        const s3 = new S3();
-        const dataStr = await s3.getFileContent(input.pathname);
+        const storage = new Storage();
+        const dataStr = await storage.getFileContent(input.pathname);
         data = JSON.parse(dataStr);
       } catch {
         data = undefined;
