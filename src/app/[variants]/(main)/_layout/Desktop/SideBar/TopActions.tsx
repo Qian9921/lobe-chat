@@ -1,5 +1,5 @@
 import { ActionIcon } from '@lobehub/ui';
-import { Compass, FolderClosed, MessageSquare } from 'lucide-react';
+import { Compass, FolderClosed, LibraryBig, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -37,17 +37,16 @@ const TopActions = memo<TopActionProps>(({ tab, isPinned }) => {
           title={t('tab.chat')}
         />
       </Link>
-      {enableKnowledgeBase && (
-        <Link aria-label={t('tab.files')} href={'/files'}>
-          <ActionIcon
-            active={tab === SidebarTabKey.Files}
-            icon={FolderClosed}
-            placement={'right'}
-            size="large"
-            title={t('tab.files')}
-          />
-        </Link>
-      )}
+      {/* 始终显示知识库按钮 */}
+      <Link aria-label={t('tab.files')} href={'/files'}>
+        <ActionIcon
+          active={tab === SidebarTabKey.Files}
+          icon={FolderClosed}
+          placement={'right'}
+          size="large"
+          title={t('tab.files')}
+        />
+      </Link>
       {showMarket && (
         <Link aria-label={t('tab.discover')} href={'/discover'}>
           <ActionIcon

@@ -18,8 +18,9 @@ const vercelUrl = `https://${process.env.VERCEL_URL}`;
 
 const APP_URL = process.env.APP_URL ? process.env.APP_URL : isInVercel ? vercelUrl : undefined;
 
-// only throw error in server mode and server side
-if (typeof window === 'undefined' && isServerMode && !APP_URL) {
+// 只在严格服务器模式下才要求APP_URL，在Firebase环境不需要
+const isStrictServerMode = process.env.NEXT_PUBLIC_SERVICE_MODE === 'server';
+if (typeof window === 'undefined' && isStrictServerMode && !APP_URL) {
   throw new Error('`APP_URL` is required in server mode');
 }
 

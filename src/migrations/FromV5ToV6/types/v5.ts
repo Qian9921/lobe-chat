@@ -2,7 +2,7 @@ import { LobeAgentTTSConfig } from '@/types/agent';
 import { FewShots, LLMParams } from '@/types/llm';
 
 /**
- * Lobe Agent
+ * OIL Agent
  */
 export interface V5Session {
   config: V5AgentConfig;

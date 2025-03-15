@@ -1,7 +1,7 @@
 export default {
   alreadyHaveAccount: '已有账号？',
   backToLogin: '返回登录',
-  brandName: 'Lobe Chat',
+  brandName: 'OIL Tutor',
   confirmPassword: '确认密码',
   confirmPasswordPlaceholder: '请再次输入您的密码',
   confirmPasswordRequired: '请确认您的密码',

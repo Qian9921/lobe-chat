@@ -5,7 +5,7 @@ const historySummaryPrompt = (historySummary: string) => `<chat_history_summary>
 `;
 
 /**
- * Lobe Chat will inject some system instructions here
+ * OIL Tutor will inject some system instructions here
  */
 export const BuiltinSystemRolePrompts = ({
   welcome,

@@ -12,7 +12,8 @@ import { preferenceSelectors } from '@/store/user/selectors';
 
 import DropdownMenu from './Dropdown';
 
-const enableKnowledge = isServerMode;
+// 对于Firebase部署来说，我们将其也视为服务器模式
+const enableKnowledge = isServerMode || !!process.env.FIREBASE_API_KEY;
 
 const Knowledge = memo(() => {
   const { t } = useTranslation('chat');
@@ -24,7 +25,9 @@ const Knowledge = memo(() => {
     s.updateGuideState,
   ]);
 
-  if (!enableKnowledgeBase) {
+  const forceEnable = true; // 强制启用知识库功能
+
+  if (!forceEnable && !enableKnowledgeBase) {
     return null;
   }
 

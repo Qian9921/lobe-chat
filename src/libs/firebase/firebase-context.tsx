@@ -6,7 +6,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 
 import { firebaseApp } from './firebase';
 import { useUserStore } from '@/store/user';
-import { LobeUser } from '@/types/user';
+import { OILUser } from '@/types/user';
 
 // 定义用户数据接口
 export interface FirebaseUserData {
@@ -78,7 +78,7 @@ export const FirebaseAuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // 用于更新用户状态的封装函数
-  const updateUserState = useCallback((isSignedIn: boolean, userData?: LobeUser) => {
+  const updateUserState = useCallback((isSignedIn: boolean, userData?: OILUser) => {
     const setUserStore = useUserStore.setState;
     
     // 更新全局状态
@@ -136,8 +136,8 @@ export const FirebaseAuthProvider = ({ children }: { children: ReactNode }) => {
                 console.log(" [Firebase Auth] 成功从 Firestore 获取用户数据");
                 setUserData(data);
                 
-                // 创建 Lobe 用户对象
-                const lobeUser: LobeUser = {
+                // 创建 OIL 用户对象
+                const oilUser: OILUser = {
                   avatar: data.photo_url || authUser.photoURL || '',
                   email: data.email || authUser.email || '',
                   fullName: data.display_name || authUser.displayName || '',
@@ -146,14 +146,14 @@ export const FirebaseAuthProvider = ({ children }: { children: ReactNode }) => {
                 };
                 
                 // 更新用户状态
-                updateUserState(true, lobeUser);
+                updateUserState(true, oilUser);
                 
-                console.log(" [Firebase Auth] 用户数据已更新到全局状态", lobeUser);
+                console.log(" [Firebase Auth] 用户数据已更新到全局状态", oilUser);
               } else {
                 console.log(" [Firebase Auth] Firestore 中没有用户文档");
                 
                 // 使用 Firebase 认证数据创建简单的用户资料
-                const lobeUser: LobeUser = {
+                const oilUser: OILUser = {
                   avatar: authUser.photoURL || '',
                   email: authUser.email || '',
                   fullName: authUser.displayName || '',
@@ -162,9 +162,9 @@ export const FirebaseAuthProvider = ({ children }: { children: ReactNode }) => {
                 };
                 
                 // 更新用户状态
-                updateUserState(true, lobeUser);
+                updateUserState(true, oilUser);
                 
-                console.log(" [Firebase Auth] 基本用户数据已更新到全局状态", lobeUser);
+                console.log(" [Firebase Auth] 基本用户数据已更新到全局状态", oilUser);
               }
               
               // 设置用户状态初始化标志
@@ -186,8 +186,8 @@ export const FirebaseAuthProvider = ({ children }: { children: ReactNode }) => {
                       const data = doc.data() as FirebaseUserData;
                       setUserData(data);
                       
-                      // 创建 Lobe 用户对象
-                      const lobeUser: LobeUser = {
+                      // 创建 OIL 用户对象
+                      const oilUser: OILUser = {
                         avatar: data.photo_url || authUser.photoURL || '',
                         email: data.email || authUser.email || '',
                         fullName: data.display_name || authUser.displayName || '',
@@ -198,7 +198,7 @@ export const FirebaseAuthProvider = ({ children }: { children: ReactNode }) => {
                       // 更新用户数据，保持登录状态
                       useUserStore.setState((state) => ({
                         ...state, 
-                        user: lobeUser,
+                        user: oilUser,
                       }));
                       
                       console.log(" [Firebase Auth] 用户数据已从实时监听器更新到全局状态");

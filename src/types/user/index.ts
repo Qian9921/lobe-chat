@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { TopicDisplayMode } from '@/types/topic';
 import { UserSettings } from '@/types/user/settings';
 
-export interface LobeUser {
+export interface OILUser {
   avatar?: string;
   email?: string | null;
   firstName?: string | null;
@@ -13,6 +13,9 @@ export interface LobeUser {
   latestName?: string | null;
   username?: string | null;
 }
+
+// 为兼容性保留 LobeUser 类型别名
+export type LobeUser = OILUser;
 
 export const UserGuideSchema = z.object({
   /**

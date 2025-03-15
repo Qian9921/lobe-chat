@@ -1,5 +1,5 @@
 /**
- * This file contains the edge router of Lobe Chat tRPC-backend
+ * This file contains the edge router of OIL Tutor tRPC-backend
  */
 import { publicProcedure, router } from '@/libs/trpc';
 
