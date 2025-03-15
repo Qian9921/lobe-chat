@@ -1,6 +1,6 @@
 import { StateCreator } from 'zustand/vanilla';
 
-import { enableAuth, enableClerk, enableNextAuth } from '@/const/auth';
+import { enableAuth, enableClerk, enableNextAuth, enableFirebaseAuth } from '@/const/auth';
 
 import { UserStore } from '../../store';
 
@@ -36,6 +36,22 @@ export const createAuthSlice: StateCreator<
       const { signOut } = await import('next-auth/react');
       signOut();
     }
+    
+    // 处理 Firebase 登出
+    if (enableFirebaseAuth) {
+      try {
+        const { logoutUser } = await import('@/libs/firebase/auth');
+        await logoutUser();
+        
+        // 清除用户状态
+        set({ isSignedIn: false, user: undefined });
+        
+        // 重定向到登录页
+        window.location.href = '/login';
+      } catch (error) {
+        console.error('Firebase 登出失败:', error);
+      }
+    }
   },
   openLogin: async () => {
     if (enableClerk) {
@@ -58,6 +74,14 @@ export const createAuthSlice: StateCreator<
         return;
       }
       signIn();
+      return;
+    }
+    
+    // 处理 Firebase 认证的登录跳转
+    if (enableFirebaseAuth) {
+      // 直接跳转到登录页面
+      window.location.href = '/login';
+      return;
     }
   },
 });

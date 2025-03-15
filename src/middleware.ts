@@ -115,16 +115,33 @@ const nextAuthMiddleware = NextAuthEdge.auth((req) => {
 
 // Firebase 认证中间件
 const firebaseAuthMiddleware = (req: NextRequest) => {
+  // 获取请求的 URL
+  const url = new URL(req.url);
+  const pathname = url.pathname;
+  
   // 获取响应
   const response = defaultMiddleware(req);
   
   // 检查请求头中是否有 Firebase 授权
   const isLoggedIn = req.headers.get(OAUTH_AUTHORIZED) === 'true';
   
+  // 尝试从 cookie 中获取认证信息 (备用检测)
+  const hasCookieAuth = req.cookies.has('firebase-auth-token') || 
+                        req.cookies.has('next-auth.session-token');
+  
+  // 确定最终认证状态（头部或cookie有一个通过即认为已登录）
+  const isAuthenticated = isLoggedIn || hasCookieAuth;
+  
   // 移除并设置 OAuth 授权头
   response.headers.delete(OAUTH_AUTHORIZED);
-  if (isLoggedIn) {
+  if (isAuthenticated) {
     response.headers.set(OAUTH_AUTHORIZED, 'true');
+  }
+  
+  // 检查是否访问受保护路由但未登录
+  if (!isAuthenticated && isProtectedRoute(req)) {
+    // 重定向到登录页面
+    return NextResponse.redirect(new URL('/login', req.url));
   }
   
   return response;
@@ -134,7 +151,15 @@ const isProtectedRoute = createRouteMatcher([
   '/settings(.*)',
   '/files(.*)',
   '/onboard(.*)',
-  // ↓ cloud ↓
+  '/profile(.*)',
+  // 临时放开聊天路径，使用客户端遮罩来保护
+  // '/chat(.*)',
+  '/discover(.*)',
+  '/me(.*)',
+  '/topics(.*)',
+  '/repos(.*)',
+  '/changelog(.*)',
+  '/', // 主页也需要登录
 ]);
 
 const clerkAuthMiddleware = clerkMiddleware(

@@ -18,7 +18,6 @@ const FirebaseSignUp = () => {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
 
   const onFinish = async (values: { displayName: string, email: string; password: string; }) => {
     try {
@@ -33,22 +32,6 @@ const FirebaseSignUp = () => {
       setError((error as Error).message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
-    try {
-      setGoogleLoading(true);
-      setError(null);
-      
-      await loginWithGoogle();
-      
-      // 登录成功后跳转到主页
-      router.push('/');
-    } catch (error) {
-      setError((error as Error).message);
-    } finally {
-      setGoogleLoading(false);
     }
   };
 
@@ -134,7 +117,10 @@ const FirebaseSignUp = () => {
 
         <Divider>{t('orContinueWith')}</Divider>
         
-        <GoogleButton loading={googleLoading} onClick={handleGoogleLogin} />
+        <GoogleButton 
+          onSuccess={() => router.push('/')} 
+          onError={(error) => setError((error as Error).message)} 
+        />
         
         <Flexbox align="center" gap={8} style={{ marginTop: 24 }}>
           <Text type="secondary">

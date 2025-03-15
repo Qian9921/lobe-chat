@@ -31,9 +31,13 @@ const SessionPanel = memo<PropsWithChildren>(({ children }) => {
     s.updateSystemStatus,
   ]);
 
-  const [cacheExpand, setCacheExpand] = useState<boolean>(Boolean(sessionExpandable));
-  const [tmpWidth, setWidth] = useState(sessionsWidth);
-  if (tmpWidth !== sessionsWidth) setWidth(sessionsWidth);
+  const [cacheExpand, setCacheExpand] = useState<boolean>(false);
+  const [tmpWidth, setWidth] = useState(0);
+
+  useEffect(() => {
+    setCacheExpand(Boolean(sessionExpandable));
+    setWidth(sessionsWidth);
+  }, [sessionExpandable, sessionsWidth]);
 
   const handleExpand = (expand: boolean) => {
     if (isEqual(expand, sessionExpandable)) return;

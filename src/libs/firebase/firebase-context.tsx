@@ -49,7 +49,7 @@ export const FirebaseAuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userData, setUserData] = useState<FirebaseUserData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isOnline, setIsOnline] = useState(typeof window !== 'undefined' ? navigator.onLine : true);
   
   // 获取 setUserStateInit 方法用于初始化用户状态
   const setUserStateInit = useUserStore((s) => s.setUserStateInit);
@@ -59,18 +59,24 @@ export const FirebaseAuthProvider = ({ children }: { children: ReactNode }) => {
   
   // 网络状态监听
   useEffect(() => {
-    const handleOnline = () => setIsOnline(true);
-    const handleOffline = () => setIsOnline(false);
+    // 只在浏览器环境中添加事件监听
+    if (typeof window !== 'undefined') {
+      const handleOnline = () => setIsOnline(true);
+      const handleOffline = () => setIsOnline(false);
+      
+      window.addEventListener('online', handleOnline);
+      window.addEventListener('offline', handleOffline);
+      
+      return () => {
+        window.removeEventListener('online', handleOnline);
+        window.removeEventListener('offline', handleOffline);
+      };
+    }
     
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
+    // 服务器环境下返回空函数
+    return () => {};
   }, []);
-  
+
   // 用于更新用户状态的封装函数
   const updateUserState = useCallback((isSignedIn: boolean, userData?: LobeUser) => {
     const setUserStore = useUserStore.setState;

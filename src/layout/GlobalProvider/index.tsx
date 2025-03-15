@@ -15,6 +15,7 @@ import QueryProvider from './Query';
 import ReactScan from './ReactScan';
 import StoreInitialization from './StoreInitialization';
 import StyleRegistry from './StyleRegistry';
+import AuthContainer from './AuthContainer';
 
 interface GlobalLayoutProps {
   appearance: string;
@@ -54,13 +55,15 @@ const GlobalLayout = async ({
             isMobile={isMobile}
             serverConfig={serverConfig}
           >
-            <QueryProvider>{children}</QueryProvider>
-            <StoreInitialization />
-            <Suspense>
-              <ImportSettings />
-              <ReactScan />
-              {process.env.NODE_ENV === 'development' && <DevPanel />}
-            </Suspense>
+            <AuthContainer>
+              <QueryProvider>{children}</QueryProvider>
+              <StoreInitialization />
+              <Suspense>
+                <ImportSettings />
+                <ReactScan />
+                {process.env.NODE_ENV === 'development' && <DevPanel />}
+              </Suspense>
+            </AuthContainer>
           </ServerConfigStoreProvider>
         </AppTheme>
         <AntdV5MonkeyPatch />
